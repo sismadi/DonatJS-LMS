@@ -1,19 +1,65 @@
-      - name: Commit and Push README
+name: Auto Generate README
+
+on:
+  workflow_dispatch: # Bisa dijalankan manual
+  push:
+    paths:
+      - 'readme-mvc.config.json' # Jalan otomatis saat config diubah
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Izin untuk push kode
+
+    steps:
+      # 1. Ambil kode repo Anda saat ini (DonatJS-LMS)
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Ambil tool readme-mvc dari repo lain
+      - name: Checkout Tool
+        uses: actions/checkout@v4
+        with:
+          repository: 'sismadi/readme-mvc'
+          path: 'readme-mvc-tool'
+
+      # 3. Setup Node.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # 4. Install dependensi tool
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./readme-mvc-tool
+
+      # 5. Jalankan Generator
+      # Note: working-directory ada di folder tool, config ada di parent (..)
+      - name: Generate README
         run: |
-          echo "Checking if README.md exists..."
-          if [ ! -f README.md ]; then
-            echo "ERROR: README.md not found!"
-            exit 1
-          fi
-          
+          node bin/cli.js generate DonatJS-LMS \
+            --output ../README.md \
+            --force \
+            --config-path ../readme-mvc.config.json
+        working-directory: ./readme-mvc-tool
+
+      # 6. Commit & Push hasil README
+      - name: Commit and Push
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Force add dan commit
           git add README.md
-          git commit -m "🤖 Auto-generate README via readme-mvc" || echo "Commit skipped (no changes)"
           
-          # Force push
-          git push origin main --force-with-lease
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Cek apakah ada perubahan
+          if git diff --staged --quiet; then
+            echo "Tidak ada perubahan pada README.md"
+          else
+            git commit -m "🤖 Auto-update README via readme-mvc"
+            git push
+            echo "✅ README berhasil di-update!"
+          fi
