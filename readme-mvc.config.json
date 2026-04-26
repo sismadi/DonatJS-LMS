@@ -1,0 +1,14 @@
+{
+  "template": "lms-lib",
+  "description": "🎓 Lightweight LMS framework untuk rendering modul pembelajaran dari JSON",
+  "topics": ["javascript", "framework", "lms", "education"],
+  "features": [
+    "JSON-to-HTML rendering engine",
+    "Zero-dependency core",
+    "Modul interaktif"
+  ],
+  "install": {
+    "npm": "donatjs-lms"
+  },
+  "license": "MIT"
+}
