@@ -1,42 +1,19 @@
-name: Auto Generate README
-
-on:
-  schedule: [cron: '0 0 * * 0'] # Minggu jam 12 malam
-  workflow_dispatch: # Bisa manual trigger
-
-jobs:
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-      # 1. Checkout repo target
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ref: main
-
-      # 2. Checkout tool readme-mvc (karena belum di npm)
-      - uses: actions/checkout@v4
-        with:
-          repository: 'sismadi/readme-mvc'
-          path: '.readme-tool'
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # 3. Setup Node & Install Dependencies di tool
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: '.readme-tool/package-lock.json'
-      - run: cd .readme-tool && npm ci
-
-      # 4. Jalankan Generator
-      - run: node .readme-tool/bin/cli.js generate donatjs-lms --output README.md --force
-
-      # 5. Commit & Push jika ada perubahan
-      - run: |
+      - name: Commit and Push README
+        run: |
+          echo "Checking if README.md exists..."
+          if [ ! -f README.md ]; then
+            echo "ERROR: README.md not found!"
+            exit 1
+          fi
+          
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Force add dan commit
           git add README.md
-          git diff --quiet && exit 0 # Stop jika tidak ada perubahan
-          git commit -m "🤖 Auto-update README via readme-mvc"
-          git push
+          git commit -m "🤖 Auto-generate README via readme-mvc" || echo "Commit skipped (no changes)"
+          
+          # Force push
+          git push origin main --force-with-lease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
