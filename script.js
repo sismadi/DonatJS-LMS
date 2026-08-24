@@ -36,7 +36,7 @@ const web = {
         if (slug !== undefined) {
             window.history.pushState({ path: currentPath }, '', `?${currentPath}`);
         }
-        document.title = `SLS | ${targetSlug.toUpperCase()}`;
+        document.title = `DonatJS | ${targetSlug.toUpperCase()}`;
         window.scrollTo(0, 0);
         if (typeof svg?.di === 'function') svg.di();
 
